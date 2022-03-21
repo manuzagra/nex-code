@@ -722,7 +722,7 @@ def backupConfigAndCode(runpath):
   with open(model_path + "/args.json", 'w') as out:
     json.dump(vars(args), out, indent=2, sort_keys=True)
   os.system("cp " + os.path.abspath(__file__) + " " + model_path + "/")
-  os.system("cp " + os.path.abspath(__file__) + " " + model_path + "/" + __file__.replace(".py", t + ".py"))
+  os.system("cp " + os.path.abspath(__file__) + " " + model_path + "/" + os.path.basename(__file__).replace(".py", t + ".py"))
   os.system("cp " + model_path + "/args.json " + model_path + "/args" + t + ".json")
 
 
