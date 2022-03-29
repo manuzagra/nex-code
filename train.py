@@ -11,6 +11,7 @@ from __future__ import print_function
 
 import argparse
 import getpass
+import shutil
 
 import torch as pt
 import torch.nn.functional as F
@@ -111,6 +112,7 @@ parser.add_argument('-clean', action='store_true', help='delete old weight witho
 
 #miscellaneous
 parser.add_argument('-all_gpu',action='store_true',help="In multiple GPU training, We don't train MLP (data parallel) on the first GPU. This make training slower but we can utilize more VRAM on other GPU.")
+parser.add_argument('-transformation', type=int, default=0, help='transformation to be applied to the coordinates')
 
 args = parser.parse_args()
 
@@ -728,7 +730,7 @@ def backupConfigAndCode(runpath):
 
 def loadDataset(dpath):
   # if dataset directory has only image, create LLFF poses
-  colmapGenPoses(dpath)
+  colmapGenPoses(dpath, args.transformation)
 
   if args.scale == -1:
     args.scale = getDatasetScale(dpath, args.deepview_width, args.llff_width)

@@ -19,6 +19,7 @@ import sys
 import json
 import argparse
 from utils.colmap_read_model import *
+from utils.transformations import TRANSFORMATIONS
 import shutil
 
 def cmd(s):
@@ -66,7 +67,7 @@ def runner(dataset):
   cmd("mv " + dataset + "/images " + dataset +"/images_distort")
   cmd("mv " + dataset +"/dense/images" +" " + dataset +'/images')
 
-def load_colmap_data(realdir):
+def load_colmap_data(realdir, transformation=0):
   '''
     copy from Local light field fusion
     https://github.com/Fyusion/LLFF/blob/master/llff/poses/pose_utils.py
@@ -98,7 +99,9 @@ def load_colmap_data(realdir):
   for k in imdata:
     im = imdata[k]
     R = im.qvec2rotmat()
+    R = TRANSFORMATIONS[transformation]['rotation'] * R
     t = im.tvec.reshape([3,1])
+    t = TRANSFORMATIONS[transformation]['translation'] + t
     m = np.concatenate([np.concatenate([R, t], 1), bottom], 0)
     w2c_mats.append(m)
 
@@ -169,7 +172,7 @@ def need_run_coolmap(basedir):
   else:
     return False
 
-def colmapGenPoses(dpath):
+def colmapGenPoses(dpath, transformation = 0):
   files = os.listdir(dpath)
   #no need colmap on deepview
   if 'models.json' in files:
@@ -189,7 +192,7 @@ def colmapGenPoses(dpath):
 
     runner(dpath)
     print( 'Post-colmap')
-    poses, pts3d, perm, hwf_cxcy = load_colmap_data(dpath)
+    poses, pts3d, perm, hwf_cxcy = load_colmap_data(dpath, transformation=transformation)
     save_poses(dpath, poses, pts3d, perm, hwf_cxcy)
     print( 'Done with imgs2poses' )
     return True
