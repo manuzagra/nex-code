@@ -99,7 +99,7 @@ def load_colmap_data(realdir, transformation=0):
   for k in imdata:
     im = imdata[k]
     R = im.qvec2rotmat()
-    R = TRANSFORMATIONS[transformation]['rotation'] * R
+    R = TRANSFORMATIONS[transformation]['rotation'] @ R
     t = im.tvec.reshape([3,1])
     t = TRANSFORMATIONS[transformation]['translation'] + t
     m = np.concatenate([np.concatenate([R, t], 1), bottom], 0)
