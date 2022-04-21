@@ -419,6 +419,43 @@ def measurement(model, sfm, dataloader, ray, write_path = ''):
     'LPIPS': lpipss
   }
 
+def get_similarity(ground_truth, image):
+  """ calculate PSNR/SSIM and LPIPS"""
+
+  gt = pt.unsqueeze(pt.tensor(ground_truth), dim=0)
+  predict_image = pt.unsqueeze(pt.tensor(image), dim=0)
+
+  # calculate LPIPS. It's require to change image range from [0,1] to [-1,1]
+  lpips_model = lpips.LPIPS(net='vgg').double()
+  gt_lpips = gt.clone().permute(0, 3, 1, 2).cpu() * 2.0 - 1.0
+  predict_image_lpips = predict_image.clone().permute(0, 3, 1, 2).detach().cpu() * 2.0 - 1.0
+  lpips_result = lpips_model.forward(predict_image_lpips.double(), gt_lpips.double()).cpu().detach().numpy()
+
+  # calculate PSNR/SSIM
+  predict_image = predict_image.cpu().detach().numpy()[0]
+  gt = gt.numpy()[0]
+  ssim_result = structural_similarity(predict_image, gt, win_size=11, multichannel=True, gaussian_weights=True)
+  psnr_result = peak_signal_noise_ratio(predict_image, gt, data_range=1.0)
+
+  return {
+    'PSNR': psnr_result,
+    'SSIM': ssim_result,
+    'LPIPS': lpips_result
+  }
+
+def get_similarity_from_files(ground_truth, image):
+  """ calculate PSNR/SSIM and LPIPS"""
+
+  ground_truth = io.imread(ground_truth)
+  image = io.imread(image)
+  # check tha the images are in the range [0-1]
+  if np.max(ground_truth) > 1:
+    ground_truth = ground_truth / 255.0
+  if np.max(image) > 1:
+    image = image / 255.0
+    
+  return get_similarity(ground_truth, image)
+
 def getPlanes(sfm, n):
 
   if sfm.invz:
