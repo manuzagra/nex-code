@@ -427,13 +427,13 @@ def get_similarity(ground_truth, image):
 
   # calculate LPIPS. It's require to change image range from [0,1] to [-1,1]
   lpips_model = lpips.LPIPS(net='vgg').double()
-  gt_lpips = gt.clone().permute(0, 3, 1, 2).cpu() * 2.0 - 1.0
-  predict_image_lpips = predict_image.clone().permute(0, 3, 1, 2).detach().cpu() * 2.0 - 1.0
+  gt_lpips = gt.clone().permute(0, 3, 1, 2).cpu() / 255 * 2.0 - 1.0
+  predict_image_lpips = predict_image.clone().permute(0, 3, 1, 2).detach().cpu() / 255 * 2.0 - 1.0
   lpips_result = lpips_model.forward(predict_image_lpips.double(), gt_lpips.double()).cpu().detach().numpy()
 
   # calculate PSNR/SSIM
-  predict_image = predict_image.cpu().detach().numpy()[0]
-  gt = gt.numpy()[0]
+  predict_image = predict_image.cpu().detach().numpy()[0] / 255
+  gt = gt.numpy()[0] / 255
   ssim_result = structural_similarity(predict_image, gt, win_size=11, multichannel=True, gaussian_weights=True)
   psnr_result = peak_signal_noise_ratio(predict_image, gt, data_range=1.0)
 
