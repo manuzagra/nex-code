@@ -750,4 +750,22 @@ def loadDataset(dpath):
 
 if __name__ == "__main__":
   sys.excepthook = colored_hook(os.path.dirname(os.path.realpath(__file__)))
+
+  # delete the colmap product so we force the execution
+  keep = ['images', 'database.db']
+
+  for file_name in os.listdir(args.scene):
+    if file_name in keep:
+      continue
+    file_name = os.path.join(args.scene, file_name)
+    if os.path.isdir(file_name):
+      shutil.rmtree(file_name)
+    elif os.path.isfile(file_name):
+      os.remove(file_name)
+
+  # save the arguments
+  with open('arguments.json', 'w') as f:
+    json.dump(vars(args), f)
+
+  # train the model
   train()
