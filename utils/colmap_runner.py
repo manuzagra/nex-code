@@ -95,6 +95,11 @@ def load_colmap_data(realdir, transformation=0):
 
   names = [imdata[k].name for k in imdata]
   print( 'Images #', len(names))
+  # save the transformation
+  with open('transform.json', 'w') as f:
+    json.dump({'rotation': TRANSFORMATIONS[transformation]['rotation'].tolist(),
+               'translation': TRANSFORMATIONS[transformation]['translation'].tolist()},
+               f)
   perm = np.argsort(names)
   for k in imdata:
     im = imdata[k]
