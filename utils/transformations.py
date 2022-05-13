@@ -19,15 +19,13 @@ def Rz(theta):
 def rotation_xyz(x, y, z):
     return Rx(x)*Ry(y)*Rz(z)
 
-def deg2rad(deg):
-    return deg * np.pi / 180
 
-# this is defined by rotation and translation
-TRANSFORMATIONS = {0: ((0,0,0), (0,0,0)),
-                   1: ((deg2rad(45), 0, 0), (3,2,1)),
-                   2: ((deg2rad(45), deg2rad(-45), 0), (-2, 3, -1)),
-                   3: ((deg2rad(-45), deg2rad(45), deg2rad(60)), (4, 7, 14)),
-                   4: ((deg2rad(-120), deg2rad(120), deg2rad(180)), (7, 3, -1)),
-                   5: ((deg2rad(120), deg2rad(-120), deg2rad(90)), (-7, -3, 1)),}
+rng = np.random.default_rng(seed=1)
+TRANSFORMATIONS = {0: ((0,0,0), (0,0,0))}
+for i in range(1, 100):
+    sigma_angle = np.pi/18 # 10 degrees
+    sigma_dist = 0.1
+        
+    TRANSFORMATIONS[i] = (tuple(rng.normal(0, sigma_angle, 3)), tuple(rng.normal(0, sigma_dist, 3)))
 
 TRANSFORMATIONS = {k:{'rotation': rotation_xyz(*v[0]), 'translation': np.array(v[1]).reshape(3,1)} for k,v in TRANSFORMATIONS.items()}
