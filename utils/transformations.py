@@ -17,7 +17,7 @@ def Rz(theta):
                      [ 0            , 0             , 1 ]])
 
 def rotation_xyz(x, y, z):
-    return Rx(x)*Ry(y)*Rz(z)
+    return Rx(x)@Ry(y)@Rz(z)
 
 
 rng = np.random.default_rng(seed=1)
