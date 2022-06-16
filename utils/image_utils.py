@@ -47,3 +47,6 @@ def get_paths(pathname):
 def averrage_image_patter_file(pathname):
     images = get_images(pathname)
     return average_image(images)
+
+def resize(image, shape):
+    return cv2.resize(image, dsize=shape)
