@@ -13,6 +13,7 @@ single_model_image = get_images('/mnt/home/users/tic_163_uma/manuzagra/output/ex
 # get all the iamges except the ones from the experiment 0 (those are the ones without transformation)
 multi_model_images = get_images('/mnt/home/users/tic_163_uma/manuzagra/output/exe_data_random-[1,2,3,4,5,6,7,8,9]*_*/runs/evaluation/scene/rendered_val/images_IMG_0587.png_ours.png')
 
+print(f'Found {len(multi_model_images)} images.')
 
 ## calculate the similarity of all of them
 
@@ -45,7 +46,7 @@ try:
 except FileNotFoundError:
     print('Generating the data for the average images.')
     av_multi_model_list = []
-    for i in range(2, 20):
+    for i in range(2, len(multi_model_list)+1):
         imgs = [data['image'] for data in multi_model_list[:i]]
         img = average_image(imgs)
         
@@ -67,32 +68,32 @@ for i, data in enumerate(av_multi_model_list):
     y_SSIM.append(data['SSIM'])
     y_LPIPS.append(data['LPIPS'])
 
-single_model['PSNR'] = (single_model['PSNR'] - min(y_PSNR)) / (max(y_PSNR) - min(y_PSNR))
-single_model['SSIM'] = (single_model['SSIM'] - min(y_SSIM)) / (max(y_SSIM) - min(y_SSIM))
-single_model['LPIPS'] = (single_model['LPIPS'] - min(y_LPIPS)) / (max(y_LPIPS) - min(y_LPIPS))
-
-x = np.array(x)
-y_PSNR = (np.array(y_PSNR) - min(y_PSNR)) / (max(y_PSNR) - min(y_PSNR))
-y_SSIM = (np.array(y_SSIM) - min(y_SSIM)) / (max(y_SSIM) - min(y_SSIM))
-y_LPIPS = (np.array(y_LPIPS) - min(y_LPIPS)) / (max(y_LPIPS) - min(y_LPIPS))
-
 
 import matplotlib.pyplot as plt
-fig, ax = plt.subplots( nrows=1, ncols=1 )
-ax.plot(x, y_PSNR, color='r', linestyle='dashdot')
-ax.plot(x, y_SSIM, color='b', linestyle='dashdot')
-ax.plot(x, y_LPIPS, color='g', linestyle='dashdot')
 
-ax.axhline(single_model['PSNR'], color='r')
-ax.axhline(single_model['SSIM'], color='b')
-ax.axhline(single_model['LPIPS'], color='g')
+fig, axs = plt.subplots( nrows=3, ncols=1, sharex=True)
 
-ax.set_xlabel('Number of images used')
-ax.set_ylabel('Similarity')
+axs[0].plot(x, y_PSNR, color='r', linestyle='dashdot')
+axs[0].axhline(single_model['PSNR'], color='r')
+axs[0].set_ylabel('PSNR')
 
-ax.set_xticks(range(min(x), max(x)+1, 1))
+axs[1].plot(x, y_SSIM, color='b', linestyle='dashdot')
+axs[1].axhline(single_model['SSIM'], color='b')
+axs[1].set_ylabel('SSIM')
 
-lgd = ax.legend(['PSNR', 'SSIM', 'LPIPS', 'PSNR reference', 'SSIM reference', 'LPIPS reference'], loc=7, bbox_to_anchor=(1.4,0.5))
+axs[2].plot(x, y_LPIPS, color='g', linestyle='dashdot')
+axs[2].axhline(single_model['LPIPS'], color='g')
+axs[2].set_ylabel('LPIPS')
+
+axs[2].set_xlabel('Number of images used')
+
+# ax.set_xlabel('Number of images used')
+# ax.set_ylabel('Similarity')
+
+axs[0].set_xticks(range(min(x), max(x)+1, 1))
+
+lgd = fig.legend(['PSNR', 'PSNR reference', 'SSIM', 'SSIM reference', 'LPIPS', 'LPIPS reference'], loc=7, bbox_to_anchor=(1.2,0.5))
 
 fig.savefig('results/av_image.png', bbox_extra_artists=(lgd,), bbox_inches='tight')
+# fig.savefig('results/av_image.png')
 plt.close(fig)
