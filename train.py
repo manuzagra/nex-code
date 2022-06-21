@@ -113,6 +113,7 @@ parser.add_argument('-clean', action='store_true', help='delete old weight witho
 #miscellaneous
 parser.add_argument('-all_gpu',action='store_true',help="In multiple GPU training, We don't train MLP (data parallel) on the first GPU. This make training slower but we can utilize more VRAM on other GPU.")
 parser.add_argument('-transformation', type=int, default=0, help='transformation to be applied to the coordinates')
+parser.add_argument('-planes', type=int, default=0, help='transformation to be applied to the planes for the MPI')
 
 args = parser.parse_args()
 
@@ -751,17 +752,48 @@ def loadDataset(dpath):
 if __name__ == "__main__":
   sys.excepthook = colored_hook(os.path.dirname(os.path.realpath(__file__)))
 
-  # delete the colmap product so we force the execution
-  keep = ['images', 'database.db']
+#   # delete the colmap product so we force the execution
+#   keep = ['images', 'database.db', 'planes.txt']
 
-  for file_name in os.listdir(args.scene):
-    if file_name in keep:
-      continue
-    file_name = os.path.join(args.scene, file_name)
-    if os.path.isdir(file_name):
-      shutil.rmtree(file_name)
-    elif os.path.isfile(file_name):
-      os.remove(file_name)
+#   for file_name in os.listdir(args.scene):
+#     if file_name in keep:
+#       continue
+#     file_name = os.path.join(args.scene, file_name)
+#     if os.path.isdir(file_name):
+#       shutil.rmtree(file_name)
+#     elif os.path.isfile(file_name):
+#       os.remove(file_name)
+
+  # modify the file planes.txt
+  with open(os.path.join(args.scene, 'planes.txt'), 'r+') as f:
+    planes = [float(n) for n in f.read().split()]
+    print(f'Initial planes are: {planes}')
+    if args.planes == 1:
+        planes[0] *= 0.98
+    elif args.planes == 2:
+        planes[1] *= 0.98
+    elif args.planes == 3:
+        planes[0] *= 1.02
+    elif args.planes == 4:
+        planes[1] *= 1.02
+    elif args.planes == 5:
+        planes[0] *= 0.98
+        planes[1] *= 0.98
+    elif args.planes == 6:
+        planes[0] *= 1.02
+        planes[1] *= 1.02
+    elif args.planes == 7:
+        planes[0] *= 0.98
+        planes[1] *= 1.02
+    elif args.planes == 8:
+        planes[0] *= 1.02
+        planes[1] *= 0.98
+    planes = [str(p) if int(p) != p else str(int(p)) for p in planes]
+    print(f'Final planes are: {planes}')
+    # replace the old text
+    f.seek(0)
+    l = f.write(' '.join(planes))
+    f.truncate(l)
 
   # save the arguments
   with open('arguments.json', 'w') as f:
