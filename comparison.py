@@ -1,5 +1,7 @@
 import pickle
 
+import matplotlib.pyplot as plt
+
 from utils.image_utils import *
 from utils.mpi_utils import get_similarity
 
@@ -55,6 +57,8 @@ except FileNotFoundError:
 
         av_multi_model_list.append(av)
 
+        plt.imsave(f"results/image_{i}.png", img.astype(np.uint8)[:,:,::-1])
+
         with open('results/av_multi_model_list.pkl', 'wb') as f:
             pickle.dump(av_multi_model_list, f)
 
@@ -68,8 +72,6 @@ for i, data in enumerate(av_multi_model_list):
     y_SSIM.append(data['SSIM'])
     y_LPIPS.append(data['LPIPS'])
 
-
-import matplotlib.pyplot as plt
 
 fig, axs = plt.subplots( nrows=3, ncols=1, sharex=True)
 
