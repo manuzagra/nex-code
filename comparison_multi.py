@@ -13,6 +13,8 @@ def clean_key_names(d):
         new_d[k.split('/')[-1].split('.')[0]] = v
     return new_d
 
+def get_n_models():
+    return len([i for i in os.listdir('/mnt/home/users/tic_163_uma/manuzagra/output/') if not os.path.isfile('/mnt/home/users/tic_163_uma/manuzagra/output/'+i)])
 
 images_pkl = 'results/images.pkl'
 try:
@@ -34,7 +36,7 @@ except:
     model_images = {}
 
     # number of folders
-    n_models = len([i for i in os.listdir('/mnt/home/users/tic_163_uma/manuzagra/output/') if not os.path.isfile('/mnt/home/users/tic_163_uma/manuzagra/output/'+i)])
+    n_models = get_n_models()
     for model in range(n_models+1):
         model_images[model] = get_images(f'/mnt/home/users/tic_163_uma/manuzagra/output/exe_data_random-{model}_*/runs/evaluation/scene/rendered_val/*.png_ours.png')
         model_images[model] = clean_key_names(model_images[model])
@@ -126,6 +128,8 @@ except:
     # as the list is sorted we will use always the images with better score
     multi_model_images = {}
     multi_model_metrics = {}
+    
+    n_models = get_n_models()
     for i in range(2, n_models+1):
         models = sorted_models[:i]
         models_name = '-'.join([str(i) for i in models])
@@ -139,6 +143,23 @@ except:
                 imgs.append(model_images[model][img])
             multi_model_images[models_name][img] = average_image(imgs)
             multi_model_metrics[models_name][img] = get_similarity(ground_truth[img], multi_model_images[models_name][img])
+
+            # save the image
+            plt.imsave(f"results/av_image_{models_name}_{img}.png", multi_model_images[models_name][img].astype(np.uint8)[:,:,::-1])
+    
+
+    tic = time.time()
+
+    # calculate the average performance of each model
+    for model in multi_model_metrics.keys():
+        model_av_metrics = {'PSNR': 0, 'SSIM': 0, 'LPIPS': 0}
+        n_img = len(multi_model_metrics[model])
+        for img in multi_model_metrics[model].keys():
+            for metric in multi_model_metrics[model][img].keys():
+                model_av_metrics[metric] += multi_model_metrics[model][img][metric] / n_img
+        multi_model_metrics[model]['av'] = dict(model_av_metrics)
+    
+    print(f'Average calculated in {time.time()-tic} secs.')
     
     # save the images
     with open(multi_images_pkl, 'wb') as f:
@@ -156,60 +177,41 @@ except:
 
 
 
-try:
-    with open('results/av_multi_model_list.pkl', 'rb') as f:
-        av_multi_model_list = pickle.load(f)
-except FileNotFoundError:
-    print('Generating the data for the average images.')
-    av_multi_model_list = []
-    for i in range(2, len(multi_model_list)+1):
-        imgs = [data['image'] for data in multi_model_list[:i]]
-        img = average_image(imgs)
-        
-        av = get_similarity(ground_truth, img)
-        av['image'] = img
-
-        av_multi_model_list.append(av)
-
-        plt.imsave(f"results/image_{i}.png", img.astype(np.uint8)[:,:,::-1])
-
-        with open('results/av_multi_model_list.pkl', 'wb') as f:
-            pickle.dump(av_multi_model_list, f)
-
 x = []
 y_PSNR = []
 y_SSIM = []
 y_LPIPS = []
-for i, data in enumerate(av_multi_model_list):
+for i, model in enumerate(multi_model_metrics.keys()):
     x.append(i+2)
-    y_PSNR.append(data['PSNR'])
-    y_SSIM.append(data['SSIM'])
-    y_LPIPS.append(data['LPIPS'])
+    y_PSNR.append(multi_model_metrics[model]['av']['PSNR'])
+    y_SSIM.append(multi_model_metrics[model]['av']['SSIM'])
+    y_LPIPS.append(multi_model_metrics[model]['av']['LPIPS'])
 
 
 fig, axs = plt.subplots( nrows=3, ncols=1, sharex=True)
 
 axs[0].plot(x, y_PSNR, color='r', linestyle='dashdot')
-axs[0].axhline(single_model['PSNR'], color='r')
+axs[0].axhline(metrics[0]['av']['PSNR'], color='r')
 axs[0].set_ylabel('PSNR')
+axs[0].legend(['PSNR', 'PSNR-referencia'], loc=7, bbox_to_anchor=(1.35,0.5))
 
 axs[1].plot(x, y_SSIM, color='b', linestyle='dashdot')
-axs[1].axhline(single_model['SSIM'], color='b')
+axs[1].axhline(metrics[0]['av']['SSIM'], color='b')
 axs[1].set_ylabel('SSIM')
+axs[1].legend(['SSIM', 'SSIM-referencia'], loc=7, bbox_to_anchor=(1.35,0.5))
 
 axs[2].plot(x, y_LPIPS, color='g', linestyle='dashdot')
-axs[2].axhline(single_model['LPIPS'], color='g')
+axs[2].axhline(metrics[0]['av']['LPIPS'], color='g')
 axs[2].set_ylabel('LPIPS')
+axs[2].legend(['LPIPS', 'LPIPS-referencia'], loc=7, bbox_to_anchor=(1.35,0.5))
 
-axs[2].set_xlabel('Number of images used')
+axs[2].set_xlabel('Numero de modelos agregados')
 
 # ax.set_xlabel('Number of images used')
 # ax.set_ylabel('Similarity')
 
 axs[0].set_xticks(range(min(x), max(x)+1, 1))
 
-lgd = fig.legend(['PSNR', 'PSNR reference', 'SSIM', 'SSIM reference', 'LPIPS', 'LPIPS reference'], loc=7, bbox_to_anchor=(1.2,0.5))
-
-fig.savefig('results/av_image.png', bbox_extra_artists=(lgd,), bbox_inches='tight')
+fig.savefig('results/av_graph.png', bbox_inches='tight')
 # fig.savefig('results/av_image.png')
 plt.close(fig)
