@@ -33,9 +33,9 @@ def get_images(pathname):
     """
     pathname(str): can be either absolute or relative, and can contain shell-style wildcards. 
     """
-    images = []
+    images = {}
     for img in glob.glob(pathname, recursive=True):
-        images.append(get_image(img))
+        images[img] = get_image(img)
     return images
 
 def get_paths(pathname):
