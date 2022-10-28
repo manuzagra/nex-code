@@ -1,6 +1,7 @@
 import os
 import time
 import pickle
+import re
 
 import matplotlib.pyplot as plt
 
@@ -13,8 +14,11 @@ def clean_key_names(d):
         new_d[k.split('/')[-1].split('.')[0]] = v
     return new_d
 
-def get_n_models():
-    return len([i for i in os.listdir('/mnt/home/users/tic_163_uma/manuzagra/output/') if not os.path.isfile('/mnt/home/users/tic_163_uma/manuzagra/output/'+i)])
+def get_models():
+    models = [re.findall('exe_\w*-(\d*)_.*', i)[0] for i in os.listdir('/mnt/home/users/tic_163_uma/manuzagra/output/') if not os.path.isfile('/mnt/home/users/tic_163_uma/manuzagra/output/'+i)]
+    models.sort(key = lambda x: int(x))
+    return models
+
 
 images_pkl = 'results/images.pkl'
 try:
@@ -36,8 +40,8 @@ except:
     model_images = {}
 
     # number of folders
-    n_models = get_n_models()
-    for model in range(n_models+1):
+    models = get_models()
+    for model in models:
         model_images[model] = get_images(f'/mnt/home/users/tic_163_uma/manuzagra/output/exe_data_random-{model}_*/runs/evaluation/scene/rendered_val/*.png_ours.png')
         model_images[model] = clean_key_names(model_images[model])
         n_images += len(model_images[model])
@@ -129,8 +133,8 @@ except:
     multi_model_images = {}
     multi_model_metrics = {}
     
-    n_models = get_n_models()
-    for i in range(2, n_models+1):
+    models = get_models()
+    for i in range(2, len(models)+1):
         models = sorted_models[:i]
         models_name = '-'.join([str(i) for i in models])
 
@@ -191,17 +195,17 @@ for i, model in enumerate(multi_model_metrics.keys()):
 fig, axs = plt.subplots( nrows=3, ncols=1, sharex=True)
 
 axs[0].plot(x, y_PSNR, color='r', linestyle='dashdot')
-axs[0].axhline(metrics[0]['av']['PSNR'], color='r')
+axs[0].axhline(metrics['0']['av']['PSNR'], color='r')
 axs[0].set_ylabel('PSNR')
 axs[0].legend(['PSNR', 'PSNR-referencia'], loc=7, bbox_to_anchor=(1.35,0.5))
 
 axs[1].plot(x, y_SSIM, color='b', linestyle='dashdot')
-axs[1].axhline(metrics[0]['av']['SSIM'], color='b')
+axs[1].axhline(metrics['0']['av']['SSIM'], color='b')
 axs[1].set_ylabel('SSIM')
 axs[1].legend(['SSIM', 'SSIM-referencia'], loc=7, bbox_to_anchor=(1.35,0.5))
 
 axs[2].plot(x, y_LPIPS, color='g', linestyle='dashdot')
-axs[2].axhline(metrics[0]['av']['LPIPS'], color='g')
+axs[2].axhline(metrics['0']['av']['LPIPS'], color='g')
 axs[2].set_ylabel('LPIPS')
 axs[2].legend(['LPIPS', 'LPIPS-referencia'], loc=7, bbox_to_anchor=(1.35,0.5))
 
